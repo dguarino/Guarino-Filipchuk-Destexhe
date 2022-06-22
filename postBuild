@@ -7,4 +7,4 @@ wget -O MICrONS_data/pni_synapses_v185.csv "https://zenodo.org/record/3710459/fi
 
 wget -O MICrONS_data/soma_subgraph_synapses_spines_v185.csv "https://zenodo.org/record/3710459/files/soma_subgraph_synapses_spines_v185.csv?download=1"
 
-wget -O MICrONS_data/calcium_trace.csv "https://zenodo.org/record/5646567/files/calcium_trace.pkl?download=1"
+wget -O MICrONS_data/calcium_trace.pkl "https://zenodo.org/record/5646567/files/calcium_trace.pkl?download=1"
