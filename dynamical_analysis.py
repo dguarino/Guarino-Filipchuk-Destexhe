@@ -261,7 +261,7 @@ else:
     print("    linkage")
     Z = linkage(events_signatures, method='complete', metric='correlation') #
     Z[ Z<0 ] = 0 # for very low correlations, negative values can result
-    cut_off = 0.7*max(Z[:,2]) # generic cutoff as in matlab, but we also bootstrap below
+    cut_off = 0.8*max(Z[:,2]) # generic cutoff as in matlab, but we also bootstrap below
 
     print("    surrogate events signatures for clustering threshold")
     # threshold for cluster significance
@@ -491,8 +491,9 @@ else:
                 outside_meanrate = np.mean(np_cells_firing_rate[coidx])
                 meanratediff = event_meanrate-outside_meanrate
                 if meanratediff < 0.:
-                    if coid in clusters_cores[caidx]:
-                        clusters_cores[caidx].remove(coid)
+                    if caidx in clusters_cores:
+                        if coid in clusters_cores[caidx]:
+                            clusters_cores[caidx].remove(coid)
 
     print("    gathering cores from all clusters ...")
     core_indexes = []
@@ -545,6 +546,9 @@ else:
         fig = plt.figure()
         for row,train in enumerate(event_spiketrains):
             ccol = 'gray'
+             # Cores
+            if row in core_indexes:
+                ccol = 'g'
             plt.scatter( train, [row]*len(train), marker='|', facecolors=ccol, s=150, linewidth=3 )
         plt.ylabel("cell IDs")
         plt.xlabel("time (s)")
