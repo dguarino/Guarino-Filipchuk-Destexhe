@@ -4,42 +4,22 @@
 #
 #    pip-compile
 #
-blosc==1.10.6
-    # via intern
-certifi==2022.6.15
-    # via requests
-charset-normalizer==2.0.12
-    # via requests
-coverage==6.4.1
-    # via nose2
 cycler==0.11.0
     # via matplotlib
 fonttools==4.33.3
     # via matplotlib
-future==0.18.2
-    # via -r requirements.in
-idna==3.3
-    # via requests
 igraph==0.9.10
     # via python-igraph
-intern==1.2.0
-    # via -r requirements.in
 kiwisolver==1.4.3
     # via matplotlib
 matplotlib==3.5.2
     # via -r requirements.in
-mock==4.0.3
-    # via intern
-nose2==0.11.0
-    # via intern
-numpy==1.22.0
+numpy==1.21.6
     # via
     #   -r requirements.in
-    #   intern
     #   matplotlib
     #   pandas
     #   scipy
-    #   zmesh
 packaging==21.3
     # via matplotlib
 pandas==1.4.2
@@ -58,22 +38,13 @@ python-igraph==0.9.10
     # via -r requirements.in
 pytz==2022.1
     # via pandas
-requests==2.28.0
-    # via intern
-scipy==1.7.3
+scipy==1.8.1
     # via -r requirements.in
 six==1.16.0
-    # via
-    #   intern
-    #   nose2
-    #   python-dateutil
+    # via python-dateutil
 texttable==1.6.4
     # via igraph
-urllib3==1.26.9
-    # via requests
-zmesh==1.4.2
-    # via intern
+wget==3.2
+    # via -r requirements.in
 
 cairocffi
-wget
-pickle5
