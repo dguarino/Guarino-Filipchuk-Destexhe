@@ -319,10 +319,7 @@ else:
     # [4 4 4 4 2 2 34 4 7 7 7 7 5 5 5 5 4 ... ]
 
     # count clusters
-    c_cnt = collections.Counter()
-    for word in events_assignments:
-        c_cnt[word] += 1
-    nevents_clusters = np.array(list(c_cnt.values()))
+    nevents_clusters = np.unique(events_assignments, return_counts=True)[1]
     # print("    events/clusters:", nevents_clusters)
     # [ 39  19  11  70  15  74  45  13  10  45 ...]
     nclusters = len(nevents_clusters)
