@@ -38,7 +38,7 @@ python-igraph==0.9.10
     # via -r requirements.in
 pytz==2022.1
     # via pandas
-scipy==1.8.1
+scipy==1.7.3
     # via -r requirements.in
 six==1.16.0
     # via python-dateutil
@@ -46,5 +46,5 @@ texttable==1.6.4
     # via igraph
 wget==3.2
     # via -r requirements.in
-    
+
 cairocffi
