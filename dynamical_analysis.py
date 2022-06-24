@@ -261,7 +261,7 @@ else:
     print("    linkage")
     Z = linkage(events_signatures, method='complete', metric='correlation') #
     Z[ Z<0 ] = 0 # for very low correlations, negative values can result
-    cut_off = 0.8*max(Z[:,2]) # generic cutoff as in matlab, but we also bootstrap below
+    cut_off = 0.7*max(Z[:,2]) # generic cutoff as in matlab, but we also bootstrap below
 
     print("    surrogate events signatures for clustering threshold")
     # threshold for cluster significance
@@ -269,7 +269,7 @@ else:
     # correlate and cluster...
     # there will be clusters, happening just by chance due to the finite number of cells
     # but their internal correlation should not be high
-    # the 95% correlation of this random cluster will be the threshold
+    # the 99% correlation of this random cluster will be the threshold
     # for a cluster to be significantly correlated
     surrogate_reproducibility_list = []
     for csur in range(100):
@@ -306,7 +306,7 @@ else:
             starti = endi
 
     # statistically significant reproducibility
-    cluster_reproducibility_threshold = np.percentile(np.array(surrogate_reproducibility_list), 95)
+    cluster_reproducibility_threshold = np.percentile(np.array(surrogate_reproducibility_list), 99)
     print("    cluster reproducibility threshold:",cluster_reproducibility_threshold)
     # number of events in a cluster, even small clusters as long as they pass the reproducibility threshold
     cluster_size_threshold = 2 # minimum requirement
@@ -381,8 +381,9 @@ else:
             else:
                 # Stimulus-free method to detect core neurons:
                 # within each cluster of events,
-                # cores are those participating to more than 95% of cluster events
-                core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 95)
+                # cores are those participating to more than 99% of cluster events
+                core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 99)
+                # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 95)
                 # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 85)
                 # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 75)
                 # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 65)
@@ -539,49 +540,49 @@ else:
         event_spiketrains = sorted(event_spiketrains, key=lambda etrain: etrain[0])
         # print(event_spiketrains)
 
-        # print("    plotting spike rasterplot for event from cluster ",ecolor,':', estart,eend)
-        fig = plt.figure()
-        for row,train in enumerate(event_spiketrains):
-            ccol = 'gray'
-             # Cores
-            if row in core_indexes:
-                ccol = 'g'
-            plt.scatter( train, [row]*len(train), marker='|', facecolors=ccol, s=150, linewidth=3 )
-        plt.ylabel("cell IDs")
-        plt.xlabel("time (s)")
-        fig.savefig(exp_path+'/results/rasterplot_'+str(clidx)+'.svg', transparent=False, dpi=300)
-        plt.close()
-        fig.clear()
-        fig.clf()
+        # # print("    plotting spike rasterplot for event from cluster ",ecolor,':', estart,eend)
+        # fig = plt.figure()
+        # for row,train in enumerate(event_spiketrains):
+        #     ccol = 'gray'
+        #      # Cores
+        #     if row in core_indexes:
+        #         ccol = 'g'
+        #     plt.scatter( train, [row]*len(train), marker='|', facecolors=ccol, s=150, linewidth=3 )
+        # plt.ylabel("cell IDs")
+        # plt.xlabel("time (s)")
+        # fig.savefig(exp_path+'/results/rasterplot_'+str(clidx)+'.svg', transparent=False, dpi=300)
+        # plt.close()
+        # fig.clear()
+        # fig.clf()
 
-        # plot cells as circles connections as edges
-        try:
-            fig, ax = plt.subplots()
-            for soma_loc, ocid in zip(pyc_ca_soma_loc, ophys_cell_ids):
-                ccol = 'lightgray'
-                zor = 1
-                if ocid in cluster_cids:
-                    ccol = 'dimgray'
-                    zor = 2
-                if ocid in clusters_cores_by_color[ecolor]:
-                    ccol = 'g'
-                    zor = 3
-                ax.scatter( soma_loc[0], soma_loc[1], marker='o', edgecolors=ccol, facecolors=ccol, s=40, zorder=zor )
-                # projections from the current cell
-                cid_postsyn_list = pyc_ca_syn_df[pyc_ca_syn_df['pre_root_id'] == ocid]['post_root_id'].tolist()
-                for ps_id in cid_postsyn_list:
-                    ips = ophys_cell_ids.index(ps_id)
-                    ax.annotate(
-                        "",
-                        xy=(soma_loc[0], soma_loc[1]), xycoords='data',
-                        xytext=(pyc_ca_soma_loc[ips][0],pyc_ca_soma_loc[ips][1]), textcoords='data',
-                        arrowprops=dict(arrowstyle="<-",connectionstyle="arc3",color=ccol),
-                        zorder=zor
-                    )
-            fig.savefig(exp_path+'/results/max_projection_'+str(clidx)+'.svg', transparent=True, dpi=300)
-            plt.close()
-            fig.clear()
-            fig.clf()
-        except NameError:
-            print("    max projection of the cores per event will not be plotted.")
+        # # plot cells as circles connections as edges
+        # try:
+        #     fig, ax = plt.subplots()
+        #     for soma_loc, ocid in zip(pyc_ca_soma_loc, ophys_cell_ids):
+        #         ccol = 'lightgray'
+        #         zor = 1
+        #         if ocid in cluster_cids:
+        #             ccol = 'dimgray'
+        #             zor = 2
+        #         if ocid in clusters_cores_by_color[ecolor]:
+        #             ccol = 'g'
+        #             zor = 3
+        #         ax.scatter( soma_loc[0], soma_loc[1], marker='o', edgecolors=ccol, facecolors=ccol, s=40, zorder=zor )
+        #         # projections from the current cell
+        #         cid_postsyn_list = pyc_ca_syn_df[pyc_ca_syn_df['pre_root_id'] == ocid]['post_root_id'].tolist()
+        #         for ps_id in cid_postsyn_list:
+        #             ips = ophys_cell_ids.index(ps_id)
+        #             ax.annotate(
+        #                 "",
+        #                 xy=(soma_loc[0], soma_loc[1]), xycoords='data',
+        #                 xytext=(pyc_ca_soma_loc[ips][0],pyc_ca_soma_loc[ips][1]), textcoords='data',
+        #                 arrowprops=dict(arrowstyle="<-",connectionstyle="arc3",color=ccol),
+        #                 zorder=zor
+        #             )
+        #     fig.savefig(exp_path+'/results/max_projection_'+str(clidx)+'.svg', transparent=True, dpi=300)
+        #     plt.close()
+        #     fig.clear()
+        #     fig.clf()
+        # except NameError:
+        #     print("    max projection of the cores per event will not be plotted.")
 
