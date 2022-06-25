@@ -26,7 +26,7 @@ ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 random.seed(123456)
-np.random.seed(123456) 
+np.random.seed(123456)
 
 # defaults
 plt.rcParams['image.cmap'] = 'viridis' # works in old and newer versions of matplotlib
@@ -345,7 +345,7 @@ else:
 
     print("    sorting events signatures by cluster")
     # sorting the index of events_signatures based on events_assignments (the first element of zip)
-    permutation = [x for _,x in sorted(zip(events_assignments, range(len(events_signatures))))] 
+    permutation = [x for _,x in sorted(zip(events_assignments, range(len(events_signatures))))]
     # permuting all arrays used after
     clustered_signatures = events_signatures[permutation]
     clustered_spectrums = events_spectrums[permutation]
@@ -376,8 +376,9 @@ else:
             # compute the subarray average
             reproducibility_list[iblock] = np.nanmean(cluster_subarray)
             # overwrite color
-            if np.nanmean(cluster_subarray) <= cluster_reproducibility_threshold:
+            if np.nanmean(cluster_subarray) < cluster_reproducibility_threshold:
                 cluster_color_array[iblock] = "gray"
+                clustered_event_colors[starti:endi] = "gray"
             else:
                 # Stimulus-free method to detect core neurons:
                 # within each cluster of events,
@@ -393,9 +394,8 @@ else:
     # plot all
     fig, ax = plt.subplots()
     plt.pcolormesh(clustered_SimilarityMap)
-    # loop over zip(clustered_events,color_array) or over events_assignments
+    # loop over cluster colors
     clcoord = 0
-    # for csize,ccolor,reproval in zip(nevents_clusters,clustered_event_colors,reproducibility_list):
     for csize,ccolor,reproval in zip(nevents_clusters,cluster_color_array,reproducibility_list):
         rect = patches.Rectangle((clcoord, clcoord), csize, csize, linewidth=0.5, edgecolor=ccolor, facecolor='none')
         ax.add_patch(rect)
@@ -448,7 +448,7 @@ else:
             for cidkey,cidprob in cid_counter.items():
                 # Cores identification, independent of stimuli
                 # A cell is considered 'core' of multiple events if it has
-                # a frequence of occurrence > core_reproducibility (%) 
+                # a frequence of occurrence > core_reproducibility (%)
                 if cidprob >= core_reproducibility[currentcl]:
                     cluster_core.append(cidkey)
                     clusters_cores_by_color[currentcl].append(cidkey)
@@ -533,7 +533,7 @@ else:
             continue
 
         # sort them based on the fitst element of each and sasve also the last for flow analysis
-        sorted_event_cidx = [cidx for _,cidx in sorted(zip(event_spiketrains, event_cidxs), key=lambda ez: ez[0][0])] 
+        sorted_event_cidx = [cidx for _,cidx in sorted(zip(event_spiketrains, event_cidxs), key=lambda ez: ez[0][0])]
         source_target_cidx.append([sorted_event_cidx[0], sorted_event_cidx[-1]]) # take beginning and end cidx
         source_target_color.append(ecolor)
         # sort them based on the fitst element of each
@@ -545,7 +545,7 @@ else:
         # for row,train in enumerate(event_spiketrains):
         #     ccol = 'gray'
         #      # Cores
-        #     if row in core_indexes:
+        #     if ophys_cell_ids.index(row) in clusters_cores_by_color[ecolor]:
         #         ccol = 'g'
         #     plt.scatter( train, [row]*len(train), marker='|', facecolors=ccol, s=150, linewidth=3 )
         # plt.ylabel("cell IDs")
@@ -585,4 +585,3 @@ else:
         #     fig.clf()
         # except NameError:
         #     print("    max projection of the cores per event will not be plotted.")
-
