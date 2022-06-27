@@ -323,7 +323,7 @@ else:
     # print("    events/clusters:", nevents_clusters)
     # [ 39  19  11  70  15  74  45  13  10  45 ...]
     nclusters = len(nevents_clusters)
-    print("    #clusters:",nclusters)
+    print("    Total number of clusters:",nclusters)
 
     # color map of the clustered events
     cmap = mpcm.get_cmap('rainbow')
@@ -333,7 +333,7 @@ else:
     # print("cluster colors:",len(cluster_color_array))
 
     threshold_map = nevents_clusters < cluster_size_threshold
-    print("    below size threshold:", np.count_nonzero(threshold_map))
+    print("    removing below size threshold clusters:", np.count_nonzero(threshold_map))
     cluster_color_array[threshold_map] = 'gray' # or 'none'
 
     color_array = []
@@ -343,7 +343,6 @@ else:
     # color_array = ['#304030', '#008c85', '#008c85', '#005955', 'gray', 'gray', '#2db3ac', ...]
     events_color_assignments = np.copy(color_array)
 
-    print("    sorting events signatures by cluster")
     # sorting the index of events_signatures based on events_assignments (the first element of zip)
     permutation = [x for _,x in sorted(zip(events_assignments, range(len(events_signatures))))]
     # permuting all arrays used after
@@ -390,7 +389,8 @@ else:
                 # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 65)
                 # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 55)
         starti = endi
-
+    print("    removing below reproducibility threshold clusters:", collections.Counter(cluster_color_array)['gray'])
+    
     # plot all
     fig, ax = plt.subplots()
     plt.pcolormesh(clustered_SimilarityMap)
@@ -459,7 +459,7 @@ else:
         # while the color is the same, append the idx to the current ensemble
         cluster_events_list.append( cl_idlist )
 
-    print("    refining cluster cores")
+    print("    removing cores firing unspecifically")
     # We want to check whether a core is firing unspecifically inside and outside of events
     # For each cluster color, take all its events and group or mask the intervals from the rest of the times.
     # Then for each core of this cluster, avg rate inside events - avg outside events
@@ -493,7 +493,7 @@ else:
                         if coid in clusters_cores[caidx]:
                             clusters_cores[caidx].remove(coid)
 
-    print("    gathering cores from all clusters ...")
+    print("    gathering cores from all clusters")
     core_indexes = []
     other_indexes = []
     for dyn_core in clusters_cores:
