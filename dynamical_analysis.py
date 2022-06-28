@@ -64,7 +64,7 @@ print("    cells firing rate: {:1.2f}±{:1.2f} sp/s".format(np.mean(cells_firing
 
 # reshuffle ISIs (100) times
 surrogate_fr = []
-for isur in range(100):
+for isur in range(1000):
     # build surrogate rasterplot
     surrogate_spiketrains = []
     for isi in spiketrainsISI:
@@ -76,7 +76,7 @@ for isur in range(100):
     surrogate_fr.append( firinghist(start_time, stop_time, surrogate_spiketrains, bin_size=frame_duration) )
 
 # instantaneous threshold is the 99% of the surrogate population instantaneous firing rate
-event_threshold = np.percentile(np.array(surrogate_fr), 95) + baseline_fr
+event_threshold = np.percentile(np.array(surrogate_fr), 99) + baseline_fr
 print("    event size threshold (mean):",np.mean(event_threshold))
 
 print("... find population events in the trial")
@@ -382,12 +382,7 @@ else:
                 # Stimulus-free method to detect core neurons:
                 # within each cluster of events,
                 # cores are those participating to more than 99% of cluster events
-                core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 99)
-                # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 95)
-                # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 85)
-                # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 75)
-                # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 65)
-                # core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, 55)
+                core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, core_reproducibility_perc)
         starti = endi
     print("    removing below reproducibility threshold clusters:", collections.Counter(cluster_color_array)['gray'])
     
