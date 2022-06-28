@@ -62,7 +62,7 @@ for st in spiketrains:
     spiketrainsISI.append( np.diff( st ) )
 print("    cells firing rate: {:1.2f}±{:1.2f} sp/s".format(np.mean(cells_firing_rate),np.std(cells_firing_rate)) )
 
-# reshuffle ISIs (100) times
+# reshuffle ISIs
 surrogate_fr = []
 for isur in range(1000):
     # build surrogate rasterplot
