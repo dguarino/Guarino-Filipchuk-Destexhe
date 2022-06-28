@@ -48,3 +48,4 @@ wget==3.2
     # via -r requirements.in
 
 cairocffi
+watermark
