@@ -142,9 +142,14 @@ def cv( spiketrains, bins ):
     ii = isi(spiketrains, bins)
     return np.std(ii) / np.mean(ii)
 
-# power law
-def powerlaw(x, a, c):
-	return c * x**(-a)
+from collections import Counter
+from collections import OrderedDict
+class OrderedCounter(Counter, OrderedDict):
+    'Counter that remembers the order elements are first encountered'
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
+    def __reduce__(self):
+        return self.__class__, (OrderedDict(self),)
 
 # ------------------------------------------------
 

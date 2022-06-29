@@ -500,6 +500,7 @@ else:
     print("    # non-cores:",len(other_indexes))
 
     print("    plotting single events rasterplots ...")
+    sorted_events_indexes = []
     source_target_cidx = []
     source_target_color = []
     cores_counts = []
@@ -527,8 +528,9 @@ else:
         if len(event_spiketrains) < np.mean(event_threshold):
             continue
 
-        # sort them based on the fitst element of each and sasve also the last for flow analysis
+        # sort them based on the first element of each and save also the last for flow analysis
         sorted_event_cidx = [cidx for _,cidx in sorted(zip(event_spiketrains, event_cidxs), key=lambda ez: ez[0][0])]
+        sorted_events_indexes.append(sorted_event_cidx)
         source_target_cidx.append([sorted_event_cidx[0], sorted_event_cidx[-1]]) # take beginning and end cidx
         source_target_color.append(ecolor)
         # sort them based on the fitst element of each
