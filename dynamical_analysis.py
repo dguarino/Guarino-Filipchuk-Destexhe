@@ -172,7 +172,6 @@ else:
         # check that the event signature has more than 1 cell
         if np.count_nonzero(spectrum)>1:
             events_spectrums.append( spectrum )
-        if np.count_nonzero(signature)>1:
             events_signatures.append( signature )
         else:
             toBremoved.append(events.index(event))
@@ -500,43 +499,38 @@ else:
     print("    # non-cores:",len(other_indexes))
 
     print("    plotting single events rasterplots ...")
-    sorted_events_indexes = []
+    sorted_events_indexes = {ecolor:list() for ecolor in cluster_color_array}
+    cluster_events_spiketrains = {ecolor:list() for ecolor in cluster_color_array}
     source_target_cidx = []
-    source_target_color = []
     cores_counts = []
     others_counts = []
-    for clidx, (cluster_cids, ecolor) in enumerate(zip(clustered_spectrums, clustered_event_colors)):
+    for event_spectrum_cids, ecolor, event_id in zip(clustered_spectrums, clustered_event_colors, permutation):
         if ecolor=='gray':
-            continue
-        event_id = events_color_assignments.tolist().index(ecolor) # take the first event of this cluster
-        event = events[event_id]
-        # take start and end of the ensemble
-        estart = (event['start'] * frame_duration )
-        eend = (event['end'] * frame_duration )
-        # print(ecolor,':', estart,eend)
-        # print(cluster_cids)
-        # slice cluster cells spiketrains to the start,end interval
+            continue        
+        # take each cid spiketrain interval for each event
         event_spiketrains = []
         event_cidxs = []
-        for cid in cluster_cids:
+        event = events[event_id]
+        # slice cluster cells spiketrains to the start,end interval
+        for cid in event_spectrum_cids:
             cidx = ophys_cell_ids.index(cid)
             train = spiketrains[cidx]
+            # take start and end of the event
+            estart = (event['start'] * frame_duration )
+            eend = (event['end'] * frame_duration )
             if np.array(train[(train>=estart)*(train<=eend)]).size>0:
-                event_spiketrains.append( train[(train>=estart)*(train<=eend)] )
                 event_cidxs.append( cidx )
-        # print(event_spiketrains)
-        if len(event_spiketrains) < np.mean(event_threshold):
-            continue
-
-        # sort them based on the first element of each and save also the last for flow analysis
-        sorted_event_cidx = [cidx for _,cidx in sorted(zip(event_spiketrains, event_cidxs), key=lambda ez: ez[0][0])]
-        sorted_events_indexes.append(sorted_event_cidx)
-        source_target_cidx.append([sorted_event_cidx[0], sorted_event_cidx[-1]]) # take beginning and end cidx
-        source_target_color.append(ecolor)
-        # sort them based on the fitst element of each
+                event_spiketrains.append( train[(train>=estart)*(train<=eend)] )
+            
+        # sort spiketrains based on the first element of each
         event_spiketrains = sorted(event_spiketrains, key=lambda etrain: etrain[0])
-        # print(event_spiketrains)
+        cluster_events_spiketrains[ecolor].append(event_spiketrains)
+        # sort indexes based on the corresponding spiketrain and save also the last for flow analysis
+        sorted_event_cidx = [cidx for _,cidx in sorted(zip(event_spiketrains, event_cidxs), key=lambda ez: ez[0][0])]
+        sorted_events_indexes[ecolor].append(sorted_event_cidx)
+        source_target_cidx.append([sorted_event_cidx[0], sorted_event_cidx[-1]]) # take beginning and end cidx
 
+        # plotting
         # # print("    plotting spike rasterplot for event from cluster ",ecolor,':', estart,eend)
         # fig = plt.figure()
         # for row,train in enumerate(event_spiketrains):
@@ -547,7 +541,7 @@ else:
         #     plt.scatter( train, [row]*len(train), marker='|', facecolors=ccol, s=150, linewidth=3 )
         # plt.ylabel("cell IDs")
         # plt.xlabel("time (s)")
-        # fig.savefig(exp_path+'/results/rasterplot_'+str(clidx)+'.svg', transparent=False, dpi=300)
+        # fig.savefig(exp_path+'/results/rasterplot_'+str(event_id)+'.svg', transparent=False, dpi=300)
         # plt.close()
         # fig.clear()
         # fig.clf()
@@ -558,7 +552,7 @@ else:
         #     for soma_loc, ocid in zip(pyc_ca_soma_loc, ophys_cell_ids):
         #         ccol = 'lightgray'
         #         zor = 1
-        #         if ocid in cluster_cids:
+        #         if ocid in event_spectrum_cids:
         #             ccol = 'dimgray'
         #             zor = 2
         #         if ocid in clusters_cores_by_color[ecolor]:
@@ -576,7 +570,7 @@ else:
         #                 arrowprops=dict(arrowstyle="<-",connectionstyle="arc3",color=ccol),
         #                 zorder=zor
         #             )
-        #     fig.savefig(exp_path+'/results/max_projection_'+str(clidx)+'.svg', transparent=True, dpi=300)
+        #     fig.savefig(exp_path+'/results/max_projection_'+str(event_id)+'.svg', transparent=True, dpi=300)
         #     plt.close()
         #     fig.clear()
         #     fig.clf()
