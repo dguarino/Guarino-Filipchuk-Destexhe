@@ -520,14 +520,14 @@ else:
             eend = (event['end'] * frame_duration )
             if np.array(train[(train>=estart)*(train<=eend)]).size>0:
                 event_cidxs.append( cidx )
-                event_spiketrains.append( train[(train>=estart)*(train<=eend)] )
+                event_spiketrains.append( list( np.rint(np.array(train[(train>=estart)*(train<=eend)])*1000.).astype(int) ) )
             
-        # sort spiketrains based on the first element of each
-        event_spiketrains = sorted(event_spiketrains, key=lambda etrain: etrain[0])
-        cluster_events_spiketrains[ecolor].append(event_spiketrains)
         # sort indexes based on the corresponding spiketrain and save also the last for flow analysis
         sorted_event_cidx = [cidx for _,cidx in sorted(zip(event_spiketrains, event_cidxs), key=lambda ez: ez[0][0])]
         sorted_events_indexes[ecolor].append(sorted_event_cidx)
+        # sort spiketrains based on the first element of each
+        event_spiketrains = sorted(event_spiketrains, key=lambda etrain: etrain[0])
+        cluster_events_spiketrains[ecolor].append(event_spiketrains)
         source_target_cidx.append([sorted_event_cidx[0], sorted_event_cidx[-1]]) # take beginning and end cidx
 
         # plotting
