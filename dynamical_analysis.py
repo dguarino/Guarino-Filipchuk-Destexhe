@@ -502,6 +502,7 @@ else:
     sorted_events_indexes = {ecolor:list() for ecolor in cluster_color_array}
     cluster_events_spiketrains = {ecolor:list() for ecolor in cluster_color_array}
     source_target_cidx = []
+    source_target_color = []
     cores_counts = []
     others_counts = []
     for event_spectrum_cids, ecolor, event_id in zip(clustered_spectrums, clustered_event_colors, permutation):
@@ -529,6 +530,7 @@ else:
         event_spiketrains = sorted(event_spiketrains, key=lambda etrain: etrain[0])
         cluster_events_spiketrains[ecolor].append(event_spiketrains)
         source_target_cidx.append([sorted_event_cidx[0], sorted_event_cidx[-1]]) # take beginning and end cidx
+        source_target_color.append(ecolor)
 
         # plotting
         # # print("    plotting spike rasterplot for event from cluster ",ecolor,':', estart,eend)

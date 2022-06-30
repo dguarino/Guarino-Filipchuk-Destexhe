@@ -30,9 +30,6 @@ random.seed(123456)
 np.random.seed(123456)
 
 #--------------------------------------------------------------------------
-import igraph as ig
-from igraph import *
-#--------------------------------------------------------------------------
 
 # if an adjacency matrix is already available, e.g. from electron microscopy, it will be loaded
 # in case it is not available, e.g. from calcium imaging, it will be estimated

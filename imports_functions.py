@@ -22,6 +22,8 @@ import wget
 import resource
 import collections
 import itertools
+import more_itertools
+
 from functools import cmp_to_key
 from functools import reduce
 from itertools import zip_longest # analysis
@@ -64,6 +66,9 @@ import matplotlib.patches as patches
 
 import pandas as pd
 pd.options.display.max_colwidth = 100
+
+import igraph as ig
+from igraph import *
 
 # ------------------------------------------------
 # classes and functions
