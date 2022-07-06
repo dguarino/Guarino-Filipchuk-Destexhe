@@ -384,7 +384,7 @@ else:
                 core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, core_reproducibility_perc)
         starti = endi
     print("    removing below reproducibility threshold clusters:", collections.Counter(cluster_color_array)['gray'])
-    
+
     # plot all
     fig, ax = plt.subplots()
     plt.pcolormesh(clustered_SimilarityMap)
@@ -426,8 +426,8 @@ else:
     currentcl = clustered_event_colors[0]
     cluster_events_list = []
     for cl_idlist, cl_color in zip(clustered_spectrums, clustered_event_colors):
-        if cl_color=='gray':
-            continue
+        # if cl_color=='gray':
+        #     continue
         # when the color changes, plot the map and reset containers
         if currentcl != cl_color:
             # find common subset of cells in a clusters
@@ -446,7 +446,8 @@ else:
                 if cidprob >= core_reproducibility[currentcl]:
                     cluster_core.append(cidkey)
                     clusters_cores_by_color[currentcl].append(cidkey)
-            clusters_cores.append(cluster_core)
+            if len(cluster_core)>0:
+                clusters_cores.append(cluster_core)
             # reset containers
             cluster_events_list = []
             currentcl = cl_color
@@ -500,6 +501,7 @@ else:
 
     print("    plotting single events rasterplots ...")
     sorted_events_indexes = {ecolor:list() for ecolor in cluster_color_array}
+    sorted_events_cidlist = {ecolor:list() for ecolor in cluster_color_array}
     cluster_events_spiketrains = {ecolor:list() for ecolor in cluster_color_array}
     source_target_cidx = []
     source_target_color = []
@@ -507,10 +509,12 @@ else:
     others_counts = []
     for event_spectrum_cids, ecolor, event_id in zip(clustered_spectrums, clustered_event_colors, permutation):
         if ecolor=='gray':
-            continue        
+            continue
         # take each cid spiketrain interval for each event
         event_spiketrains = []
+        event_spikelist = []
         event_cidxs = []
+        event_cids = []
         event = events[event_id]
         # slice cluster cells spiketrains to the start,end interval
         for cid in event_spectrum_cids:
@@ -521,11 +525,17 @@ else:
             eend = (event['end'] * frame_duration )
             if np.array(train[(train>=estart)*(train<=eend)]).size>0:
                 event_cidxs.append( cidx )
-                event_spiketrains.append( list( np.rint(np.array(train[(train>=estart)*(train<=eend)])*1000.).astype(int) ) )
-            
+                spikelist = list( np.rint(np.array(train[(train>=estart)*(train<=eend)])*1000.).astype(int) ) # from sec to ms
+                event_spiketrains.append( spikelist )
+
+                event_cids.extend([cid for x in range(len(spikelist))])
+                event_spikelist.extend( spikelist ) # from sec to ms
+
         # sort indexes based on the corresponding spiketrain and save also the last for flow analysis
         sorted_event_cidx = [cidx for _,cidx in sorted(zip(event_spiketrains, event_cidxs), key=lambda ez: ez[0][0])]
         sorted_events_indexes[ecolor].append(sorted_event_cidx)
+
+        sorted_events_cidlist[ecolor].append([cid for _,cid in sorted(zip(event_spikelist, event_cids), key=lambda ez: ez[0])])
         # sort spiketrains based on the first element of each
         event_spiketrains = sorted(event_spiketrains, key=lambda etrain: etrain[0])
         cluster_events_spiketrains[ecolor].append(event_spiketrains)
@@ -537,7 +547,7 @@ else:
         # fig = plt.figure()
         # for row,train in enumerate(event_spiketrains):
         #     ccol = 'gray'
-        #      # Cores
+        #     # Cores... to be accessed by cellID not row!
         #     if ophys_cell_ids.index(row) in clusters_cores_by_color[ecolor]:
         #         ccol = 'g'
         #     plt.scatter( train, [row]*len(train), marker='|', facecolors=ccol, s=150, linewidth=3 )

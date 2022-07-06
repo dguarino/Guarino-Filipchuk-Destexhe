@@ -79,6 +79,7 @@ else:
 adjacency_matrix[ adjacency_matrix <= adjacency_matrix.max()*0.4 ] = 0.0
 
 dgraph = ig.Graph.Weighted_Adjacency(adjacency_matrix)
+# dgraph = ig.Graph.DataFrame(syn_df[["pre_root_id", "post_root_id"]], directed=True) # 3M rows are too much for igraph
 
 ig.plot(dgraph, exp_path+'/results/ring.png', layout=dgraph.layout("circle"), edge_curved=0.2, edge_color='#000', edge_width=0.5, edge_arrow_size=0.1, vertex_size=5, vertex_color='#000', margin=50)
 
@@ -142,7 +143,7 @@ plt.bar(np.array(range(len(motifs)))+0.15, surrogate_motifs, color='orange', lab
 plt.legend()
 plt.ylabel('occurrences')
 plt.xlabel('motifs types')
-fig.savefig(exp_path+'/results/motifs_occurrences.png', transparent=True)
+fig.savefig(exp_path+'/results/motifs_occurrences.svg', transparent=True)
 plt.close()
 fig.clear()
 fig.clf()
