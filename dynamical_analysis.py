@@ -305,7 +305,7 @@ else:
             starti = endi
 
     # statistically significant reproducibility
-    cluster_reproducibility_threshold = np.percentile(np.array(surrogate_reproducibility_list), 99)
+    cluster_reproducibility_threshold = np.percentile(np.array(surrogate_reproducibility_list), 95)
     print("    cluster reproducibility threshold:",cluster_reproducibility_threshold)
     # number of events in a cluster, even small clusters as long as they pass the reproducibility threshold
     cluster_size_threshold = 2 # minimum requirement
@@ -332,7 +332,7 @@ else:
     # print("cluster colors:",len(cluster_color_array))
 
     threshold_map = nevents_clusters < cluster_size_threshold
-    print("    removing below size threshold clusters:", np.count_nonzero(threshold_map))
+    # print("    removing below size threshold clusters:", np.count_nonzero(threshold_map))
     cluster_color_array[threshold_map] = 'gray' # or 'none'
 
     color_array = []
@@ -383,7 +383,7 @@ else:
                 # cores are those participating to more than 99% of cluster events
                 core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, core_reproducibility_perc)
         starti = endi
-    print("    removing below reproducibility threshold clusters:", collections.Counter(cluster_color_array)['gray'])
+    print("    # clusters (after removing those below reproducibility threshold):", len(cluster_color_array)-collections.Counter(cluster_color_array)['gray'])
 
     # plot all
     fig, ax = plt.subplots()
@@ -495,9 +495,17 @@ else:
         core_indexes.extend( [ophys_cell_ids.index(strid) for strid in dyn_core] )
     core_indexes = np.unique(core_indexes)
     print("    # cores:",len(core_indexes))
-    # print(core_indexes)
     other_indexes = [i for i in range(len(ophys_cell_ids)) if i not in core_indexes]
     print("    # non-cores:",len(other_indexes))
+    # details
+    cxc = []
+    oxc = []
+    for ccl in clusters_cores_by_color.values():
+        cxc.append(len(ccl))
+        ool = [1 for i in ophys_cell_ids if i not in ccl]
+        oxc.append(len(ool))
+    print("    cores per cluster: {:1.2f}±{:1.2f} (min {:d}, max {:d})".format(np.mean(cxc),np.std(cxc),np.min(cxc),np.max(cxc)) )
+    print("    others per cluster: {:1.2f}±{:1.2f} (min {:d}, max {:d})".format(np.mean(oxc),np.std(oxc),np.min(oxc),np.max(oxc)) )
 
     print("    plotting single events rasterplots ...")
     sorted_events_indexes = {ecolor:list() for ecolor in cluster_color_array}
@@ -505,8 +513,6 @@ else:
     cluster_events_spiketrains = {ecolor:list() for ecolor in cluster_color_array}
     source_target_cidx = []
     source_target_color = []
-    cores_counts = []
-    others_counts = []
     for event_spectrum_cids, ecolor, event_id in zip(clustered_spectrums, clustered_event_colors, permutation):
         if ecolor=='gray':
             continue
