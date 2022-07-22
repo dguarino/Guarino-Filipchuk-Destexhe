@@ -383,7 +383,8 @@ else:
                 # cores are those participating to more than 99% of cluster events
                 core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, core_reproducibility_perc)
         starti = endi
-    print("    # clusters (after removing those below reproducibility threshold):", len(cluster_color_array)-collections.Counter(cluster_color_array)['gray'])
+    print("    # clusters (after removing those below reproducibility threshold):", 
+          len(cluster_color_array)-collections.Counter(cluster_color_array)['gray'])
 
     # plot all
     fig, ax = plt.subplots()
@@ -391,9 +392,10 @@ else:
     # loop over cluster colors
     clcoord = 0
     for csize,ccolor,reproval in zip(nevents_clusters,cluster_color_array,reproducibility_list):
-        rect = patches.Rectangle((clcoord, clcoord), csize, csize, linewidth=0.5, edgecolor=ccolor, facecolor='none')
-        ax.add_patch(rect)
-        # ax.text(clcoord+1, clcoord+1, "{:1.2f}".format(reproval), color=ccolor, fontsize=2)
+        if ccolor!="gray":
+            rect = patches.Rectangle((clcoord, clcoord), csize, csize, linewidth=1., edgecolor=ccolor, facecolor='none')
+            ax.add_patch(rect)
+            # ax.text(clcoord+1, clcoord+1, "{:1.2f}".format(reproval), color=ccolor, fontsize=2)
         clcoord += csize
     cbar = plt.colorbar()
     cbar.outline.set_visible(False)
