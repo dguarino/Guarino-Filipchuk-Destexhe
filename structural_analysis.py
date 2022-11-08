@@ -79,30 +79,177 @@ else:
 adjacency_matrix[ adjacency_matrix <= adjacency_matrix.max()*0.4 ] = 0.0
 
 dgraph = ig.Graph.Weighted_Adjacency(adjacency_matrix)
-# dgraph = ig.Graph.DataFrame(syn_df[["pre_root_id", "post_root_id"]], directed=True) # 3M rows are too much for igraph
 
-ig.plot(dgraph, exp_path+'/results/ring.png', layout=dgraph.layout("circle"), edge_curved=0.2, edge_color='#000', edge_width=0.5, edge_arrow_size=0.1, vertex_size=5, vertex_color='#000', margin=50)
+# Full network
+# igraph import from pandas works better with 1M edges using directly IDs
+# get all root_ids
+root_ids = pd.concat([syn_df["post_root_id"], syn_df["pre_root_id"]], ignore_index=True).drop_duplicates()#.reset_index()
+root_idxs = list(range( len(root_ids) )) # we could have used pandas indexes, just being explicit
+map_root_ids = dict(zip(root_ids,root_idxs))
+source_s = syn_df["pre_root_id"].map(map_root_ids)
+target_s = syn_df["post_root_id"].map(map_root_ids)
+syn_edges_df = pd.DataFrame({'source':source_s.astype(int),'target':target_s.astype(int)})
+# print(syn_edges_df)
+vertices_df = pd.DataFrame(root_idxs, columns=['ID'])
+dgraph = ig.Graph.DataFrame(edges=syn_edges_df, directed=True, vertices=vertices_df, use_vids=True)
 
-print("    number of vertices:", dgraph.vcount())
+# ig.plot(dgraph, exp_path+'/results/ring.png', layout=dgraph.layout("circle"), edge_curved=0.2, edge_color='#000', edge_width=0.5, edge_arrow_size=0.1, vertex_size=5, vertex_color='#000', margin=50)
 
-print('... Network nodes degrees')
-degrees = np.array(dgraph.degree())
-np.save(exp_path+'/results/degrees.npy', degrees)
+# print("    number of vertices:", dgraph.vcount())
 
-print("... Degree distributions")
-# https://igraph.org/python/api/latest/igraph._igraph.GraphBase.html#degree
-degdist = dgraph.degree_distribution(bin_width=5)
-degree_counts = [bi[2] for bi in degdist.bins()]
-np.save(exp_path+'/results/degree_counts.npy', degree_counts)
-fig = plt.figure()
-plt.plot(range(len(degree_counts)), degree_counts, linewidth=3.0)
-plt.ylabel('Number of vertices')
-plt.xlabel('Degree')
-plt.xscale('log')
-plt.yscale('log')
-plt.savefig(exp_path+'/results/degree_distribution.png', transparent=True, dpi=300)
-plt.close()
-fig.clf()
+# print('... Network nodes degrees')
+# degrees = np.array(dgraph.degree())
+# np.save(exp_path+'/results/degrees.npy', degrees)
+
+# print("... Degree distributions")
+# # https://igraph.org/python/api/latest/igraph._igraph.GraphBase.html#degree
+# degdist = dgraph.degree_distribution(bin_width=5)
+# degree_counts = [bi[2] for bi in degdist.bins()]
+# np.save(exp_path+'/results/degree_counts.npy', degree_counts)
+# fig = plt.figure()
+# plt.plot(range(len(degree_counts)), degree_counts, linewidth=3.0)
+# plt.ylabel('Number of vertices')
+# plt.xlabel('Degree')
+# plt.xscale('log')
+# plt.yscale('log')
+# plt.savefig(exp_path+'/results/degree_distribution.png', transparent=True, dpi=300)
+# plt.close()
+# fig.clf()
+
+# # Clustering Coefficient of only excitatory cells
+# print('... Local Clustering Coefficient')
+# # undirected only
+# local_clustering_coefficients = np.array(dgraph.transitivity_local_undirected(vertices=None, mode="zero"))
+# print("    min", np.min(local_clustering_coefficients))
+# print("    mean", np.mean(local_clustering_coefficients))
+# print("    max", np.max(local_clustering_coefficients))
+# np.save(exp_path+'/results/local_clustering_coefficients.npy', local_clustering_coefficients)
+
+# # covariance matrix and eigenvalues/vectors
+# Cov = np.cov(degrees,local_clustering_coefficients)
+# # print(Cov)
+# w, v = np.linalg.eig(Cov)
+# # print(w)
+# # print(v)
+
+# # power-law fit
+# def powerlaw(x, a, b):
+#     return a * (x**-b)
+# # fitparams, _ = curve_fit(powerlaw, degrees, local_clustering_coefficients, p0=np.asarray([1000.,2.]))
+# # print("fit:",fitparams)
+# # increasing a pushes the curve up, increasing b tilt clockwise
+# # paramsfit = [2, 1.02] # 1M EM-only
+# paramsfit = [1, 0.5] # 112 Ca/EM
+# pfit = powerlaw(degrees, *paramsfit)
+
+# # Coefficient of Determination
+# # In the best case, the modeled values exactly match the observed values, which results in ss_res=0 and r2=1.
+# # A baseline model, which always predicts np.mean(LCC), will have r2=0.
+# # Models that have worse predictions than this baseline will have a negative r2.
+# # residual sum of squares
+# ss_res = np.sum((local_clustering_coefficients - pfit) ** 2)
+# # total sum of squares
+# ss_tot = np.sum((local_clustering_coefficients - np.mean(local_clustering_coefficients)) ** 2)
+# # r-squared goodeness-of-fit
+# r2 = 1 - (ss_res / ss_tot)
+
+# # # Hierarchical modularity as in SadovskyMacLean2013
+# # # demonstrated by a linear log-log covariance relationship between node degree and node local clustering coefficient.
+# # fig = plt.figure()
+# # summer = mpcm.summer
+# # for deg,ccoef in zip(degrees,local_clustering_coefficients):
+# #     plt.scatter( deg, ccoef, marker='o', facecolor='#AAD400', s=10, edgecolors='none', alpha=0.25) # 22um
+# # plt.plot(degrees,pfit,c='k')
+# # plt.yscale('log')
+# # plt.xscale('log')
+# # # plt.xlim([10,200])
+# # # plt.ylim([0.01,1])
+# # ax = plt.gca()
+# # ax.spines['top'].set_visible(False)
+# # ax.spines['right'].set_visible(False)
+# # plt.ylabel('LCC')
+# # plt.xlabel('degree')
+# # # ax.set_xticklabels([])
+# # # ax.set_yticklabels([])
+# # plt.tick_params(axis='both', bottom='on', top='on', left='off', right='off')
+# # plt.title("eigv: {:.2f}, {:.4f} - fit x^: {:.2f} - GoF R2={:.2f}".format(w[0], w[1], paramsfit[1], r2))
+# # plt.tight_layout()
+# # fig.savefig(exp_path+'/results/hierarchical_modularity.png', transparent=True, dpi=400)
+# # # fig.savefig(exp_path+'/results/hierarchical_modularity.svg', transparent=True)
+# # plt.close()
+# # fig.clf()
+
+print("... local bow-tie analysis")
+# Local bow-ties analysis as in FujitaKichikawaFujiwaraSoumaIyetomi2019
+# identify communities based on (multiple trials) random walks as flow
+communities = dgraph.community_infomap(trials=100)
+print("    communities:",len(communities))
+structural_cores = []
+communities_lens = []
+dgraph_btlabels = np.array( ["#999"] * len(ophys_cell_ids) )
+for icomm,community in enumerate(communities):
+    print("    ",icomm,len(community))
+    community_btlabels = np.array( ["#999"] * len(community) )
+    # create a subgraph to find the bow-tie core
+    community_graph = dgraph.subgraph(community) # community contains the indexes in dgraph
+    # 1. Find the largest component of this subgraph based on flow
+    sorted_subgroups = sorted(community_graph.community_infomap(trials=20), key=len, reverse=True)
+    if len(sorted_subgroups)<3:
+        continue
+    largest = sorted_subgroups[0]
+    # get nodes as dgraph vertex indexes
+    largest_indexes = np.array(community)[largest].tolist()
+    # check that is not alone, in which case we do not consider for bow-tie
+    if len(largest)==len(community):
+        continue
+    # otherwise, let's analyze whether there is a bow-tie structure
+    # 2. For each node not in the first, check whether it can reach the first.
+    otherS_ids = [sid for sid in range(len(community)) if sid not in largest]
+    incomponent = []
+    for notcore in community_graph.vs.select(otherS_ids):
+        inpaths = community_graph.get_all_simple_paths(notcore, to=largest, cutoff=1, mode='out')
+        if len(inpaths)>0:
+            incomponent.append(notcore.index)
+    # 3. For each node not in the largest nor the in-component
+    complement = [sid for sid in otherS_ids if sid not in incomponent]
+    # for ocid in complement:
+    #     community_btlabels[ocid] = "#11F"
+    #     dgraph_btlabels[np.array(community)[ocid]] = "#11F"
+    outcomponent = []
+    for notcore in community_graph.vs.select(complement):
+        outpaths = community_graph.get_all_simple_paths(notcore, to=largest, cutoff=1, mode='in')
+        if len(outpaths)>0:
+            outcomponent.append(notcore.index)
+    # if there is no outcomponent is not a bow-tie
+    if len(outcomponent)==0:
+        continue
+    # in case the bow-tie has been identified, color its nodes and append its community to the count
+    communities_lens.append(len(community))
+    for compidx in largest:
+        dgraph_btlabels[np.array(community)[compidx]] = "#F11"
+        community_btlabels[compidx] = "#F11"
+    for compidx in incomponent:
+        dgraph_btlabels[np.array(community)[compidx]] = "#1F1"
+        community_btlabels[compidx] = "#1F1"
+    for compidx in outcomponent:
+        dgraph_btlabels[np.array(community)[compidx]] = "#11F"
+        community_btlabels[compidx] = "#11F"
+    # get all dgraph community cores to later check their overlap with dynamical cores
+    structural_cores.append( largest_indexes )
+    # local community layout
+    community_graph.vs["color"] = community_btlabels
+    community_graph.es["color"] = [community_graph.vs[edge.source]["color"]+"4" for edge in community_graph.es]
+    ig.plot(community_graph, exp_path+'/results/fr_community_'+str(icomm)+'.png', layout=community_graph.layout("fr"), vertex_size=15, vertex_frame_width=0, edge_arrow_size=0.1, margin=50)
+print("    communities lens:",stats.describe(communities_lens))
+# dgraph Layout
+matplotlib.rcParams['figure.dpi'] = 900
+# cairo dpi
+dgraph.vs["color"] = dgraph_btlabels
+dgraph.es["color"] = [dgraph.vs[edge.source]["color"]+"4" for edge in dgraph.es]
+ig.plot(dgraph, exp_path+'/results/fr.png', layout=dgraph.layout("mds"), vertex_size=5, vertex_frame_width=0, edge_arrow_size=0.1, margin=50)
+
+0/0
+
 
 print('... Betweenness centrality')
 betweenness_centrality = np.array(dgraph.betweenness(vertices=None, directed=True, cutoff=None, weights=None))
