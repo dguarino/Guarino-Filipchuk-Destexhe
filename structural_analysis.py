@@ -77,116 +77,141 @@ else:
 # therefore this line has no effect on EM adjacency matrices.
 # To ensure sparseness of the adjacency matrix, SadovskyMacLean2013 discard weak correlations (<0.4)
 adjacency_matrix[ adjacency_matrix <= adjacency_matrix.max()*0.4 ] = 0.0
-
+# EM-Ca identified cells (112)
 dgraph = ig.Graph.Weighted_Adjacency(adjacency_matrix)
+# or ...
 
 # Full network
 # igraph import from pandas works better with 1M edges using directly IDs
 # get all root_ids
-root_ids = pd.concat([syn_df["post_root_id"], syn_df["pre_root_id"]], ignore_index=True).drop_duplicates()#.reset_index()
-root_idxs = list(range( len(root_ids) )) # we could have used pandas indexes, just being explicit
+root_ids = pd.concat([syn_df["post_root_id"], syn_df["pre_root_id"]], ignore_index=True).drop_duplicates()
+root_idxs = list(range( len(root_ids) )) # all cells
 map_root_ids = dict(zip(root_ids,root_idxs))
 source_s = syn_df["pre_root_id"].map(map_root_ids)
 target_s = syn_df["post_root_id"].map(map_root_ids)
 syn_edges_df = pd.DataFrame({'source':source_s.astype(int),'target':target_s.astype(int)})
-# print(syn_edges_df)
 vertices_df = pd.DataFrame(root_idxs, columns=['ID'])
+
+# # proofread network
+# # get all root_ids
+# root_ids = pd.concat([syn_spines_df["post_root_id"], syn_spines_df["pre_root_id"]], ignore_index=True).drop_duplicates()
+# root_idxs = list(range( len(root_ids) )) # all cells
+# map_root_ids = dict(zip(root_ids,root_idxs))
+# source_s = syn_spines_df["pre_root_id"].map(map_root_ids)
+# target_s = syn_spines_df["post_root_id"].map(map_root_ids)
+# syn_edges_df = pd.DataFrame({'source':source_s.astype(int),'target':target_s.astype(int)})
+# vertices_df = pd.DataFrame(root_idxs, columns=['ID'])
+
+print(len(map_root_ids))
+# print(source_s)
+# print(len(source_s))
+# print(len(target_s))
+print(syn_edges_df)
+print(vertices_df)
 dgraph = ig.Graph.DataFrame(edges=syn_edges_df, directed=True, vertices=vertices_df, use_vids=True)
 
 # ig.plot(dgraph, exp_path+'/results/ring.png', layout=dgraph.layout("circle"), edge_curved=0.2, edge_color='#000', edge_width=0.5, edge_arrow_size=0.1, vertex_size=5, vertex_color='#000', margin=50)
 
-# print("    number of vertices:", dgraph.vcount())
+print("    number of vertices:", dgraph.vcount())
 
-# print('... Network nodes degrees')
-# degrees = np.array(dgraph.degree())
-# np.save(exp_path+'/results/degrees.npy', degrees)
+print('... Network nodes degrees')
+degrees = np.array(dgraph.degree())
+print("    ", np.count_nonzero(degrees))
+np.save(exp_path+'/results/degrees.npy', degrees)
 
-# print("... Degree distributions")
-# # https://igraph.org/python/api/latest/igraph._igraph.GraphBase.html#degree
-# degdist = dgraph.degree_distribution(bin_width=5)
-# degree_counts = [bi[2] for bi in degdist.bins()]
-# np.save(exp_path+'/results/degree_counts.npy', degree_counts)
-# fig = plt.figure()
-# plt.plot(range(len(degree_counts)), degree_counts, linewidth=3.0)
-# plt.ylabel('Number of vertices')
-# plt.xlabel('Degree')
-# plt.xscale('log')
-# plt.yscale('log')
-# plt.savefig(exp_path+'/results/degree_distribution.png', transparent=True, dpi=300)
-# plt.close()
-# fig.clf()
+print("... Degree distributions")
+# https://igraph.org/python/api/latest/igraph._igraph.GraphBase.html#degree
+degdist = dgraph.degree_distribution(bin_width=5)
+degree_counts = [bi[2] for bi in degdist.bins()]
+np.save(exp_path+'/results/degree_counts.npy', degree_counts)
+fig = plt.figure()
+plt.plot(range(len(degree_counts)), degree_counts, linewidth=3.0)
+plt.ylabel('Number of vertices')
+plt.xlabel('Degree')
+plt.xscale('log')
+plt.yscale('log')
+plt.savefig(exp_path+'/results/degree_distribution.png', transparent=True, dpi=300)
+plt.close()
+fig.clf()
 
-# # Clustering Coefficient of only excitatory cells
-# print('... Local Clustering Coefficient')
-# # undirected only
-# local_clustering_coefficients = np.array(dgraph.transitivity_local_undirected(vertices=None, mode="zero"))
-# print("    min", np.min(local_clustering_coefficients))
-# print("    mean", np.mean(local_clustering_coefficients))
-# print("    max", np.max(local_clustering_coefficients))
-# np.save(exp_path+'/results/local_clustering_coefficients.npy', local_clustering_coefficients)
+# Clustering Coefficient of only excitatory cells
+print('... Local Clustering Coefficient')
+# undirected only
+local_clustering_coefficients = np.array(dgraph.transitivity_local_undirected(vertices=None, mode="zero"))
+print("    min", np.min(local_clustering_coefficients))
+print("    mean", np.mean(local_clustering_coefficients))
+print("    max", np.max(local_clustering_coefficients))
+np.save(exp_path+'/results/local_clustering_coefficients.npy', local_clustering_coefficients)
 
-# # covariance matrix and eigenvalues/vectors
-# Cov = np.cov(degrees,local_clustering_coefficients)
-# # print(Cov)
-# w, v = np.linalg.eig(Cov)
-# # print(w)
-# # print(v)
+# covariance matrix and eigenvalues/vectors
+Cov = np.cov(degrees,local_clustering_coefficients)
+print("    Covariance matrix degrees,local_clustering_coefficients:")
+print(Cov)
+w, v = np.linalg.eig(Cov)
+print("    eigenvalues:")
+print(w)
+print("    eigenvectors:")
+print(v)
 
-# # power-law fit
-# def powerlaw(x, a, b):
-#     return a * (x**-b)
-# # fitparams, _ = curve_fit(powerlaw, degrees, local_clustering_coefficients, p0=np.asarray([1000.,2.]))
-# # print("fit:",fitparams)
-# # increasing a pushes the curve up, increasing b tilt clockwise
-# # paramsfit = [2, 1.02] # 1M EM-only
+# power-law fit
+def powerlaw(x, a, b):
+    return a * (x**-b)
+# fitparams, _ = curve_fit(powerlaw, degrees, local_clustering_coefficients, p0=np.asarray([1000.,2.]))
+# print("fit:",fitparams)
+# increasing a pushes the curve up, increasing b tilt clockwise
+paramsfit = [2, 1.5] # 1M EM-only
+# paramsfit = [2, 1.05] # 334 EM-only all proofread
 # paramsfit = [1, 0.5] # 112 Ca/EM
-# pfit = powerlaw(degrees, *paramsfit)
+pfit = powerlaw(degrees, *paramsfit)
 
-# # Coefficient of Determination
-# # In the best case, the modeled values exactly match the observed values, which results in ss_res=0 and r2=1.
-# # A baseline model, which always predicts np.mean(LCC), will have r2=0.
-# # Models that have worse predictions than this baseline will have a negative r2.
-# # residual sum of squares
-# ss_res = np.sum((local_clustering_coefficients - pfit) ** 2)
-# # total sum of squares
-# ss_tot = np.sum((local_clustering_coefficients - np.mean(local_clustering_coefficients)) ** 2)
-# # r-squared goodeness-of-fit
-# r2 = 1 - (ss_res / ss_tot)
+# Coefficient of Determination
+# In the best case, the modeled values exactly match the observed values, which results in ss_res=0 and r2=1.
+# A baseline model, which always predicts np.mean(LCC), will have r2=0.
+# Models that have worse predictions than this baseline will have a negative r2.
+# residual sum of squares
+ss_res = np.sum((local_clustering_coefficients - pfit) ** 2)
+# total sum of squares
+ss_tot = np.sum((local_clustering_coefficients - np.mean(local_clustering_coefficients)) ** 2)
+# r-squared goodeness-of-fit
+r2 = 1 - (ss_res / ss_tot)
 
-# # # Hierarchical modularity as in SadovskyMacLean2013
-# # # demonstrated by a linear log-log covariance relationship between node degree and node local clustering coefficient.
-# # fig = plt.figure()
-# # summer = mpcm.summer
-# # for deg,ccoef in zip(degrees,local_clustering_coefficients):
-# #     plt.scatter( deg, ccoef, marker='o', facecolor='#AAD400', s=10, edgecolors='none', alpha=0.25) # 22um
-# # plt.plot(degrees,pfit,c='k')
-# # plt.yscale('log')
-# # plt.xscale('log')
-# # # plt.xlim([10,200])
-# # # plt.ylim([0.01,1])
-# # ax = plt.gca()
-# # ax.spines['top'].set_visible(False)
-# # ax.spines['right'].set_visible(False)
-# # plt.ylabel('LCC')
-# # plt.xlabel('degree')
-# # # ax.set_xticklabels([])
-# # # ax.set_yticklabels([])
-# # plt.tick_params(axis='both', bottom='on', top='on', left='off', right='off')
-# # plt.title("eigv: {:.2f}, {:.4f} - fit x^: {:.2f} - GoF R2={:.2f}".format(w[0], w[1], paramsfit[1], r2))
-# # plt.tight_layout()
-# # fig.savefig(exp_path+'/results/hierarchical_modularity.png', transparent=True, dpi=400)
-# # # fig.savefig(exp_path+'/results/hierarchical_modularity.svg', transparent=True)
-# # plt.close()
-# # fig.clf()
+# Hierarchical modularity as in SadovskyMacLean2013
+# demonstrated by a linear log-log covariance relationship between node degree and node local clustering coefficient.
+fig = plt.figure()
+summer = mpcm.summer
+# for deg,ccoef in zip(degrees,local_clustering_coefficients):
+#     plt.scatter( deg, ccoef, marker='o', facecolor='#AAD400', s=10, edgecolors='none', alpha=0.25) # 22um
+plt.scatter( degrees,local_clustering_coefficients, marker='o', facecolor='#AAD400', s=10, edgecolors='none', alpha=0.25) # 22um
+plt.plot(degrees,pfit,c='k')
+plt.yscale('log')
+plt.xscale('log')
+# plt.xlim([10,200])
+# plt.ylim([0.01,1])
+ax = plt.gca()
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+plt.ylabel('LCC')
+plt.xlabel('degree')
+# ax.set_xticklabels([])
+# ax.set_yticklabels([])
+plt.tick_params(axis='both', bottom='on', top='on', left='off', right='off')
+plt.title("eigv: {:.2f}, {:.4f} - fit x^: {:.2f} - GoF R2={:.2f}".format(w[0], w[1], paramsfit[1], r2))
+plt.tight_layout()
+fig.savefig(exp_path+'/results/hierarchical_modularity.png', transparent=True, dpi=900)
+fig.savefig(exp_path+'/results/hierarchical_modularity.svg', transparent=True)
+plt.close()
+fig.clf()
 
 print("... local bow-tie analysis")
 # Local bow-ties analysis as in FujitaKichikawaFujiwaraSoumaIyetomi2019
 # identify communities based on (multiple trials) random walks as flow
-communities = dgraph.community_infomap(trials=100)
+# there should not be problems for igraph:
+# https://stackoverflow.com/questions/70126260/maximum-amount-of-data-that-r-igraph-package-can-handle
+communities = dgraph.community_infomap(trials=10)
 print("    communities:",len(communities))
 structural_cores = []
 communities_lens = []
-dgraph_btlabels = np.array( ["#999"] * len(ophys_cell_ids) )
+dgraph_btlabels = np.array( ["#999"] * len(dgraph.vs) )
 for icomm,community in enumerate(communities):
     print("    ",icomm,len(community))
     community_btlabels = np.array( ["#999"] * len(community) )
