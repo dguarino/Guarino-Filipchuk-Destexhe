@@ -209,7 +209,7 @@ print("... MICrONS bow-tie analysis")
 # identify communities based on (multiple trials) random walks as flow
 # igraph gets stuck, using the same (and more powerful with teleportation) algorithm
 from infomap import Infomap # with teleportation to ensure no local solution
-im = Infomap(no_self_links=True, flow_model="directed", seed=2**32-1, core_loop_limit=10, prefer_modular_solution=True, inner_parallelization=True, num_trials=10)
+im = Infomap(no_self_links=True, flow_model="directed", seed=2**32-2, prefer_modular_solution=True)
 im.add_networkx_graph( dgraph.to_networkx() ) # infomap accepts only networkx format
 print("    starting infomap analysis")
 im.run()
@@ -221,11 +221,10 @@ community = []
 for node_id, module_id in sorted(im.modules, key=lambda x: x[1]):
     if module_id>previous_id: # simple module handling
         community_graph = dgraph.subgraph(community) # community contains the indexes in dgraph
-        imcommunity = Infomap(no_self_links=True, flow_model="directed", seed=2**32-1, core_loop_limit=10, prefer_modular_solution=True, silent=True, num_trials=10)
+        imcommunity = Infomap(no_self_links=True, flow_model="directed", seed=2**32-2, prefer_modular_solution=True, silent=True)
         imcommunity.add_networkx_graph( community_graph.to_networkx() )
         imcommunity.run()
-        # for communitynode_id, communitymodule_id in sorted(imcommunity.modules, key=lambda x: x[1]):
-        #     print(communitynode_id, communitymodule_id)
+        # unspecific submodule specification
         if imcommunity.num_non_trivial_top_modules > 2:
             communities_lens.append(len(community))
         communities_tot.append(len(community))
@@ -242,7 +241,7 @@ print("    communities lens:",stats.describe(communities_lens))
 # To see whether the score can be improved or worsen by different connectivities,
 # we can rewire at random (easy), and make statistics
 rewired_bowtie_score = {}
-for rewireprob in np.linspace(0.01, 0.2, num=10):
+for rewireprob in np.linspace(0.01, 0.05, num=10):
     print("    \nrewiring probability:",rewireprob)
     rewired_bowtie_score[rewireprob] = []
 
@@ -295,6 +294,8 @@ for rewireprob in np.linspace(0.01, 0.2, num=10):
                 previous_id=module_id
                 community = []
             community.append(node_id)
+        if len(communities_tot)<5:
+            continue
         bowtie_score = len(communities_lens)/len(communities_tot)
         print("    trial:", trial, "score:",bowtie_score)
         rewired_bowtie_score[rewireprob].append( bowtie_score )
