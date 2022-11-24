@@ -114,6 +114,7 @@ dgraph = ig.Graph.DataFrame(edges=syn_edges_df, directed=True, vertices=vertices
 # ig.plot(dgraph, exp_path+'/results/ring.png', layout=dgraph.layout("circle"), edge_curved=0.2, edge_color='#000', edge_width=0.5, edge_arrow_size=0.1, vertex_size=5, vertex_color='#000', margin=50)
 
 print("    number of vertices:", dgraph.vcount())
+print("    diameter:", dgraph.diameter())
 
 print('... Network nodes degrees')
 degrees = np.array(dgraph.degree())
@@ -236,73 +237,68 @@ for node_id, module_id in sorted(im.modules, key=lambda x: x[1]):
 print("    bow-tie score:", len(communities_lens)/len(communities_tot))
 print("    communities lens:",stats.describe(communities_lens))
 
-print("... local bow-tie analysis")
-# Local bow-ties analysis as in FujitaKichikawaFujiwaraSoumaIyetomi2019
-# identify communities based on (multiple trials) random walks as flow
-# there should not be problems for igraph:
-# https://stackoverflow.com/questions/70126260/maximum-amount-of-data-that-r-igraph-package-can-handle
-communities = dgraph.community_infomap(trials=100)
-print("    communities:",len(communities))
-structural_cores = []
-communities_lens = []
-dgraph_btlabels = np.array( ["#999"] * len(dgraph.vs) )
-for icomm,community in enumerate(communities):
-    print("    ",icomm,len(community))
-    community_btlabels = np.array( ["#999"] * len(community) )
-    # create a subgraph to find the bow-tie core
-    community_graph = dgraph.subgraph(community) # community contains the indexes in dgraph
-    # 1. Find the largest component of this subgraph based on flow
-    sorted_subgroups = sorted(community_graph.community_infomap(trials=20), key=len, reverse=True)
-    if len(sorted_subgroups)<3:
-        continue
-    largest = sorted_subgroups[0]
-    # get nodes as dgraph vertex indexes
-    largest_indexes = np.array(community)[largest].tolist()
-    # check that is not alone, in which case we do not consider for bow-tie
-    if len(largest)==len(community):
-        continue
-    # otherwise, let's analyze whether there is a bow-tie structure
-    # 2. For each node not in the first, check whether it can reach the first.
-    otherS_ids = [sid for sid in range(len(community)) if sid not in largest]
-    incomponent = []
-    for notcore in community_graph.vs.select(otherS_ids):
-        inpaths = community_graph.get_all_simple_paths(notcore, to=largest, cutoff=1, mode='out')
-        if len(inpaths)>0:
-            incomponent.append(notcore.index)
-    # 3. For each node not in the largest nor the in-component
-    complement = [sid for sid in otherS_ids if sid not in incomponent]
-    # for ocid in complement:
-    #     community_btlabels[ocid] = "#11F"
-    #     dgraph_btlabels[np.array(community)[ocid]] = "#11F"
-    outcomponent = []
-    for notcore in community_graph.vs.select(complement):
-        outpaths = community_graph.get_all_simple_paths(notcore, to=largest, cutoff=1, mode='in')
-        if len(outpaths)>0:
-            outcomponent.append(notcore.index)
-    # if there is no outcomponent is not a bow-tie
-    if len(outcomponent)==0:
-        continue
-    # in case the bow-tie has been identified, color its nodes and append its community to the count
-    communities_lens.append(len(community))
-    for compidx in largest:
-        dgraph_btlabels[np.array(community)[compidx]] = "#F11"
-        community_btlabels[compidx] = "#F11"
-    for compidx in incomponent:
-        dgraph_btlabels[np.array(community)[compidx]] = "#1F1"
-        community_btlabels[compidx] = "#1F1"
-    for compidx in outcomponent:
-        dgraph_btlabels[np.array(community)[compidx]] = "#11F"
-        community_btlabels[compidx] = "#11F"
-    # get all dgraph community cores to later check their overlap with dynamical cores
-    structural_cores.append( largest_indexes )
-    # local community layout
-    community_graph.vs["color"] = community_btlabels
-    community_graph.es["color"] = [community_graph.vs[edge.source]["color"]+"4" for edge in community_graph.es]
-    ig.plot(community_graph, exp_path+'/results/fr_community_'+str(icomm)+'.png', layout=community_graph.layout("fr"), vertex_size=15, vertex_frame_width=0, edge_arrow_size=0.1, margin=50)
-print("    communities lens:",stats.describe(communities_lens))
-# dgraph Layout
-matplotlib.rcParams['figure.dpi'] = 900
-# cairo dpi
-dgraph.vs["color"] = dgraph_btlabels
-dgraph.es["color"] = [dgraph.vs[edge.source]["color"]+"4" for edge in dgraph.es]
-ig.plot(dgraph, exp_path+'/results/fr.png', layout=dgraph.layout("mds"), vertex_size=5, vertex_frame_width=0, edge_arrow_size=0.1, margin=50)
+# -----------------
+# The EM data gives a bow-tie score.
+# To see whether the score can be improved or worsen by different connectivities,
+# we can rewire at random (easy), and make statistics
+rewired_bowtie_score = {}
+for rewireprob in np.linspace(0.01, 0.2, num=10):
+    print("    \nrewiring probability:",rewireprob)
+    rewired_bowtie_score[rewireprob] = []
+
+    for trial in range(0,10):
+        rewired_graph = dgraph.copy()
+
+        rewired_graph.rewire_edges(prob=rewireprob, loops=False, multiple=True) # in place!
+
+        # Clustering Coefficient of only excitatory cells
+        local_clustering_coefficients = np.array(rewired_graph.transitivity_local_undirected(vertices=None, mode="zero"))
+        # plot
+        paramsfit = [2, 1.05] # 334 EM-only all proofread
+        pfit = powerlaw(degrees, *paramsfit)
+        fig = plt.figure()
+        summer = mpcm.summer
+        plt.scatter( degrees,local_clustering_coefficients, marker='o', facecolor='#111111', s=50, edgecolors='none', alpha=0.5) #
+        plt.plot(degrees,pfit,c='k')
+        plt.yscale('log')
+        plt.xscale('log')
+        ax = plt.gca()
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        plt.ylabel('LCC')
+        plt.xlabel('degree')
+        plt.tick_params(axis='both', bottom='on', top='on', left='off', right='off')
+        plt.tight_layout()
+        #fig.savefig(exp_path+'/results/rewiring/hierarchical_modularity'+str(rewireprob)+str(trial)+'.png', transparent=True, dpi=900)
+        fig.savefig(exp_path+'/results/rewiring/hierarchical_modularity'+str(rewireprob)+"_"+str(trial)+'.svg', transparent=True)
+        plt.close()
+        fig.clf()
+
+        # Local bow-ties analysis as in FujitaKichikawaFujiwaraSoumaIyetomi2019
+        from infomap import Infomap
+        im = Infomap(silent=True, no_self_links=True, flow_model="directed", seed=2**32-1, core_loop_limit=10, prefer_modular_solution=True, inner_parallelization=True, num_trials=10)
+        im.add_networkx_graph( rewired_graph.to_networkx() ) # infomap accepts only networkx format
+        im.run()
+        previous_id = 1
+        communities_tot = []
+        communities_lens = []
+        community = []
+        for node_id, module_id in sorted(im.modules, key=lambda x: x[1]):
+            if module_id>previous_id: # simple module handling
+                community_graph = rewired_graph.subgraph(community) # community contains the indexes in rewired_graph
+                imcommunity = Infomap(no_self_links=True, flow_model="directed", seed=2**32-1, core_loop_limit=10, prefer_modular_solution=True, silent=True, num_trials=10)
+                imcommunity.add_networkx_graph( community_graph.to_networkx() )
+                imcommunity.run()
+                if imcommunity.num_non_trivial_top_modules > 2:
+                    communities_lens.append(len(community))
+                communities_tot.append(len(community))
+                previous_id=module_id
+                community = []
+            community.append(node_id)
+        bowtie_score = len(communities_lens)/len(communities_tot)
+        print("    trial:", trial, "score:",bowtie_score)
+        rewired_bowtie_score[rewireprob].append( bowtie_score )
+
+for rwiredk, rewiredv in rewired_bowtie_score.items():
+    print("dgraph rewired with prob:",rwiredk)
+    print("    bow-tie score avg:", stats.describe(rewiredv))
