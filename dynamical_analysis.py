@@ -383,7 +383,7 @@ else:
                 # cores are those participating to more than 99% of cluster events
                 core_reproducibility[cluster_color_array[iblock]] = np.percentile(cluster_subarray, core_reproducibility_perc)
         starti = endi
-    print("    # clusters (after removing those below reproducibility threshold):", 
+    print("    # clusters (after removing those below reproducibility threshold):",
           len(cluster_color_array)-collections.Counter(cluster_color_array)['gray'])
 
     # plot all
@@ -489,6 +489,8 @@ else:
                     if caidx in clusters_cores:
                         if coid in clusters_cores[caidx]:
                             clusters_cores[caidx].remove(coid)
+
+    np.save(exp_path+'/results/clusters_cores.npy', clusters_cores)
 
     print("    gathering cores from all clusters")
     core_indexes = []

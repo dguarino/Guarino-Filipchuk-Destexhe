@@ -218,6 +218,7 @@ previous_id = 1
 communities_tot = []
 communities_lens = []
 community = []
+structural_cores = []
 for node_id, module_id in sorted(im.modules, key=lambda x: x[1]):
     if module_id>previous_id: # simple module handling
         community_graph = dgraph.subgraph(community) # community contains the indexes in dgraph
@@ -228,6 +229,12 @@ for node_id, module_id in sorted(im.modules, key=lambda x: x[1]):
         if imcommunity.num_non_trivial_top_modules > 2:
             communities_lens.append(len(community))
         communities_tot.append(len(community))
+        # get central community cores
+        community_cores = []
+        for imnode, immodules in imcommunity.get_multilevel_modules().items():
+            if immodules[0]==1: # only the center
+                community_cores.append(imnode)
+        structural_cores.append(community_cores)
         # simple module handling
         previous_id=module_id
         community = []
@@ -236,70 +243,134 @@ for node_id, module_id in sorted(im.modules, key=lambda x: x[1]):
 print("    bow-tie score:", len(communities_lens)/len(communities_tot))
 print("    communities lens:",stats.describe(communities_lens))
 
-# -----------------
-# The EM data gives a bow-tie score.
-# To see whether the score can be improved or worsen by different connectivities,
-# we can rewire at random (easy), and make statistics
-rewired_bowtie_score = {}
-for rewireprob in np.linspace(0.01, 0.05, num=10):
-    print("    \nrewiring probability:",rewireprob)
-    rewired_bowtie_score[rewireprob] = []
+# # -----------------
+# # The EM data gives a bow-tie score.
+# # To see whether the score can be improved or worsen by different connectivities,
+# # we can rewire at random (easy), and make statistics
+# rewired_bowtie_score = {}
+# for rewireprob in np.linspace(0.01, 0.05, num=10):
+#     print("    \nrewiring probability:",rewireprob)
+#     rewired_bowtie_score[rewireprob] = []
+#
+#     for trial in range(0,10):
+#         rewired_graph = dgraph.copy()
+#
+#         rewired_graph.rewire_edges(prob=rewireprob, loops=False, multiple=True) # in place!
+#
+#         # Clustering Coefficient of only excitatory cells
+#         local_clustering_coefficients = np.array(rewired_graph.transitivity_local_undirected(vertices=None, mode="zero"))
+#         # plot
+#         paramsfit = [2, 1.05] # 334 EM-only all proofread
+#         pfit = powerlaw(degrees, *paramsfit)
+#         fig = plt.figure()
+#         summer = mpcm.summer
+#         plt.scatter( degrees,local_clustering_coefficients, marker='o', facecolor='#111111', s=50, edgecolors='none', alpha=0.5) #
+#         plt.plot(degrees,pfit,c='k')
+#         plt.yscale('log')
+#         plt.xscale('log')
+#         ax = plt.gca()
+#         ax.spines['top'].set_visible(False)
+#         ax.spines['right'].set_visible(False)
+#         plt.ylabel('LCC')
+#         plt.xlabel('degree')
+#         plt.tick_params(axis='both', bottom='on', top='on', left='off', right='off')
+#         plt.tight_layout()
+#         #fig.savefig(exp_path+'/results/rewiring/hierarchical_modularity'+str(rewireprob)+str(trial)+'.png', transparent=True, dpi=900)
+#         fig.savefig(exp_path+'/results/rewiring/hierarchical_modularity'+str(rewireprob)+"_"+str(trial)+'.svg', transparent=True)
+#         plt.close()
+#         fig.clf()
+#
+#         # Local bow-ties analysis as in FujitaKichikawaFujiwaraSoumaIyetomi2019
+#         from infomap import Infomap
+#         im = Infomap(silent=True, no_self_links=True, flow_model="directed", seed=2**32-1, core_loop_limit=10, prefer_modular_solution=True, inner_parallelization=True, num_trials=10)
+#         im.add_networkx_graph( rewired_graph.to_networkx() ) # infomap accepts only networkx format
+#         im.run()
+#         previous_id = 1
+#         communities_tot = []
+#         communities_lens = []
+#         community = []
+#         for node_id, module_id in sorted(im.modules, key=lambda x: x[1]):
+#             if module_id>previous_id: # simple module handling
+#                 community_graph = rewired_graph.subgraph(community) # community contains the indexes in rewired_graph
+#                 imcommunity = Infomap(no_self_links=True, flow_model="directed", seed=2**32-1, core_loop_limit=10, prefer_modular_solution=True, silent=True, num_trials=10)
+#                 imcommunity.add_networkx_graph( community_graph.to_networkx() )
+#                 imcommunity.run()
+#                 if imcommunity.num_non_trivial_top_modules > 2:
+#                     communities_lens.append(len(community))
+#                 communities_tot.append(len(community))
+#                 previous_id=module_id
+#                 community = []
+#             community.append(node_id)
+#         if len(communities_tot)<5:
+#             continue
+#         bowtie_score = len(communities_lens)/len(communities_tot)
+#         print("    trial:", trial, "score:",bowtie_score)
+#         rewired_bowtie_score[rewireprob].append( bowtie_score )
+#
+# for rwiredk, rewiredv in rewired_bowtie_score.items():
+#     print("dgraph rewired with prob:",rwiredk)
+#     print("    bow-tie score avg:", stats.describe(rewiredv))
 
-    for trial in range(0,10):
-        rewired_graph = dgraph.copy()
+print("... loading clusters")
+if os.path.exists('./results/clusters_cores.npy'):
+    clusters_cores = np.load('./results/clusters_cores.npy', allow_pickle=True)
+    print("... loaded:", clusters_cores.shape)
+    # print(clusters_cores)
+    # print(clusters_cores.shape)
 
-        rewired_graph.rewire_edges(prob=rewireprob, loops=False, multiple=True) # in place!
+    core_indexes = []
+    other_indexes = []
+    clusters_cores_indexes = []
+    for dyn_core in clusters_cores:
+        core_indexes.extend( [ophys_cell_ids.index(strid) for strid in dyn_core] )
+        clusters_cores_indexes.append( [ophys_cell_ids.index(strid) for strid in dyn_core] )
+    core_indexes = np.unique(core_indexes)
+    print("    # cores:",len(core_indexes))
+    other_indexes = [i for i in range(len(ophys_cell_ids)) if i not in core_indexes]
+    print("    # non-cores:",len(other_indexes))
 
-        # Clustering Coefficient of only excitatory cells
-        local_clustering_coefficients = np.array(rewired_graph.transitivity_local_undirected(vertices=None, mode="zero"))
-        # plot
-        paramsfit = [2, 1.05] # 334 EM-only all proofread
-        pfit = powerlaw(degrees, *paramsfit)
-        fig = plt.figure()
-        summer = mpcm.summer
-        plt.scatter( degrees,local_clustering_coefficients, marker='o', facecolor='#111111', s=50, edgecolors='none', alpha=0.5) #
-        plt.plot(degrees,pfit,c='k')
-        plt.yscale('log')
-        plt.xscale('log')
-        ax = plt.gca()
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        plt.ylabel('LCC')
-        plt.xlabel('degree')
-        plt.tick_params(axis='both', bottom='on', top='on', left='off', right='off')
-        plt.tight_layout()
-        #fig.savefig(exp_path+'/results/rewiring/hierarchical_modularity'+str(rewireprob)+str(trial)+'.png', transparent=True, dpi=900)
-        fig.savefig(exp_path+'/results/rewiring/hierarchical_modularity'+str(rewireprob)+"_"+str(trial)+'.svg', transparent=True)
-        plt.close()
-        fig.clf()
+    print("... overlap between structural cores and dynamical cores")
+    # for each set of dynamical cores from a cluster
+    # we compare it with all the sets of structral core nodes identified by the InfoMap (and take the max to avoid duplicates)
+    overlapSD = {}
+    overlap_ratio = []
+    ccs_len = []
+    scs_len = []
+    for iccs,ccs in enumerate(clusters_cores_indexes):
+        ccs_len.append(len(ccs))
+        kccs = "{}_{}_".format(iccs,len(ccs))
+        overlapSD[kccs+"lens"] = []
+        overlapSD[kccs+"ratio"] = []
+        for scs in structural_cores:
+            scs_len.append(len(scs))
+            overlapSD[kccs+"lens"].append( "{}/{}".format( len(set(ccs)&set(scs)), len(ccs) ) )
+            overlapSD[kccs+"ratio"].append( len(set(ccs)&set(scs))/len(ccs) )
+        # print(len(scs),len(ccs))
+        # choose which structural_cores better matches
+        index_max = max(range(len(overlapSD[kccs+"ratio"])), key=overlapSD[kccs+"ratio"].__getitem__)
+        print(overlapSD[kccs+"ratio"][index_max], overlapSD[kccs+"lens"][index_max])
+        overlap_ratio.append(overlapSD[kccs+"ratio"][index_max])
+    print(stats.describe(overlap_ratio))
 
-        # Local bow-ties analysis as in FujitaKichikawaFujiwaraSoumaIyetomi2019
-        from infomap import Infomap
-        im = Infomap(silent=True, no_self_links=True, flow_model="directed", seed=2**32-1, core_loop_limit=10, prefer_modular_solution=True, inner_parallelization=True, num_trials=10)
-        im.add_networkx_graph( rewired_graph.to_networkx() ) # infomap accepts only networkx format
-        im.run()
-        previous_id = 1
-        communities_tot = []
-        communities_lens = []
-        community = []
-        for node_id, module_id in sorted(im.modules, key=lambda x: x[1]):
-            if module_id>previous_id: # simple module handling
-                community_graph = rewired_graph.subgraph(community) # community contains the indexes in rewired_graph
-                imcommunity = Infomap(no_self_links=True, flow_model="directed", seed=2**32-1, core_loop_limit=10, prefer_modular_solution=True, silent=True, num_trials=10)
-                imcommunity.add_networkx_graph( community_graph.to_networkx() )
-                imcommunity.run()
-                if imcommunity.num_non_trivial_top_modules > 2:
-                    communities_lens.append(len(community))
-                communities_tot.append(len(community))
-                previous_id=module_id
-                community = []
-            community.append(node_id)
-        if len(communities_tot)<5:
-            continue
-        bowtie_score = len(communities_lens)/len(communities_tot)
-        print("    trial:", trial, "score:",bowtie_score)
-        rewired_bowtie_score[rewireprob].append( bowtie_score )
-
-for rwiredk, rewiredv in rewired_bowtie_score.items():
-    print("dgraph rewired with prob:",rwiredk)
-    print("    bow-tie score avg:", stats.describe(rewiredv))
+    # plot all ratio
+    fig, ax = plt.subplots()
+    xs = np.random.normal(1, 0.04, len(overlap_ratio))
+    plt.scatter(xs, overlap_ratio, alpha=0.3, c='forestgreen', edgecolors='none')
+    xs = np.random.normal(2, 0.04, len(overlap_ratio)) # placeholder for MIDCrONS data
+    plt.scatter(xs, overlap_ratio, alpha=0.3, c='black', edgecolors='none')
+    vp = ax.violinplot([overlap_ratio,overlap_ratio], widths=0.15, showextrema=False, showmeans=True)
+    for pc in vp['bodies']:
+        pc.set_edgecolor('black')
+    for pc,cb in zip(vp['bodies'],['forestgreen','black']):
+        pc.set_facecolor(cb)
+    vp['cmeans'].set_color('orange')
+    ax.spines['top'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    plt.ylim([0,0.7])
+    # plt.axhline(y=max(perm_pval), color='r', linestyle='dashed')
+    plt.ylabel('Overlap ratio')
+    fig.savefig('./results/dynamical_structural_cores.svg', transparent=True)
+    plt.close()
+    fig.clf()

@@ -50,3 +50,4 @@ wget==3.2
 cairocffi
 watermark
 more_itertools
+infomap
