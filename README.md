@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/498655295.svg)](https://zenodo.org/badge/latestdoi/498655295) 
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dguarino/Guarino-Filipchuk-Destexhe/HEAD)
 
-# Reproducible activity activity without attractors in the mouse cortex
+# Reproducible activity without attractors in the mouse cortex
 
 Analysis code to reproduce all panels in figures 1 and 2 of the paper by Guarino, Filipchuk, Destexhe (2023)   
 preprint link: https://www.biorxiv.org/content/10.1101/2022.05.24.493230
