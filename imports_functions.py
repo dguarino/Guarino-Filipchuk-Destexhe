@@ -9,6 +9,7 @@ import os
 import io
 import os.path
 import shutil
+import copy
 import pprint
 import gc
 import json
