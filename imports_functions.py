@@ -71,6 +71,8 @@ pd.options.display.max_colwidth = 100
 import igraph as ig
 from igraph import *
 
+from IPython import get_ipython
+
 # ------------------------------------------------
 # classes and functions
 
@@ -211,3 +213,34 @@ class MidpointNormalize(mpl.colors.Normalize):
         normalized_mid = 0.5
         x, y = [self.vmin, self.midpoint, self.vmax], [normalized_min, normalized_mid, normalized_max]
         return np.ma.masked_array(np.interp(value, x, y))
+    
+# ------------------------------------------------------------------------------
+    
+class StopExecution(Exception):
+    def _render_traceback_(self):
+        # pass
+        return []
+
+
+# https://stackoverflow.com/questions/24005221/ipython-notebook-early-exit-from-cell
+class IpyExit(SystemExit):
+    """
+    Exit Exception for IPython.
+    Exception temporarily redirects stderr to buffer.
+    """
+    def __init__(self):
+        # print("exiting")  # optionally print some message to stdout, too
+        # ... or do other stuff before exit
+        sys.stderr = io.StringIO()
+
+    def __del__(self):
+        sys.stderr.close()
+        sys.stderr = sys.__stderr__  # restore from backup
+
+def ipy_exit():
+    raise IpyExit
+
+if get_ipython():    # ...run with IPython
+    exit = ipy_exit  # rebind to custom exit
+else:
+    exit = exit      # just make exit importable
