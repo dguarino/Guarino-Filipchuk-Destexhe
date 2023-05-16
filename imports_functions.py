@@ -216,9 +216,8 @@ class MidpointNormalize(mpl.colors.Normalize):
     
 # ------------------------------------------------------------------------------
     
-class StopExecution(Exception):
+class StopExecution(Warning):
     def _render_traceback_(self):
-        # pass
         return []
 
 
