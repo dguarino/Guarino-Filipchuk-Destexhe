@@ -98,6 +98,7 @@ def crosscorrelation(x, y, maxlag, mode='corr'):
     elif mode == 'corr':    # gets Pearson correlation
         return (T.dot(px)/px.size - (T.mean(axis=1)*px.mean())) / (np.std(T, axis=1) * np.std(px))
 
+# ------------------------------------------------
 # Finds baseline in the firing rate
 # Eilers and H. Boelens 2005
 # Memory optimised version: https://stackoverflow.com/questions/29156532/python-baseline-correction-library
@@ -125,6 +126,7 @@ def baseline(y, l, p, niter=10):
         w = p * (y > z) + (1-p) * (y < z)
     return z
 
+# ------------------------------------------------
 
 def firinghist( start, end, spiketrains, bin_size=10 ):
     if len(spiketrains)==0:
@@ -159,19 +161,15 @@ class OrderedCounter(Counter, OrderedDict):
     def __reduce__(self):
         return self.__class__, (OrderedDict(self),)
 
+def moving_average(a, n=3) :
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
 # ------------------------------------------------
 
 # MICrONS specific functions
 
-# Dictionary with segment id as key.
-# scan : Scan id where the cell’s activity was recorded (stimulus differs by scan).
-# trace_raw : Raw calcium trace (scaled version of dF).
-# trace : Denoised calcium trace.
-# spike : Spike probability inferred from the raw calcium trace.
-# stimulus : Stimulus label corresponding to the scan the cell’s activity was recorded.
-# Traces have a length of 27100 (Note that the raw data has 27300 frames). First 200 frames (blank stimulus) in the raw data are not used as it was used for the extraction of the traces.
-
-# ------------------------------------------------------------------------------
 # From
 # https://github.com/AllenInstitute/MicronsBinder/blob/master/notebooks/vignette_analysis/function/lib/data.py
 # Get soma center coordinates ([um])
