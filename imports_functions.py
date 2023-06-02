@@ -73,6 +73,9 @@ from igraph import *
 
 from IPython import get_ipython
 
+import warnings
+warnings.filterwarnings(action='once')
+
 # ------------------------------------------------
 # classes and functions
 
