@@ -1,10 +1,9 @@
-[![DOI](https://zenodo.org/badge/498655295.svg)](https://zenodo.org/badge/latestdoi/498655295) 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8112490.svg)](https://doi.org/10.5281/zenodo.8112490)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dguarino/Guarino-Filipchuk-Destexhe/HEAD)
 
 # Attractor dynamics without structural signature in the mouse cortex
 
 Analysis code to reproduce all figures of the forthcoming paper by Guarino, Filipchuk, Destexhe      
-preprint link: https://www.biorxiv.org/content/10.1101/2022.05.24.493230
 
 The [`GuarinoFilipchukDestexhe`](https://github.com/dguarino/Guarino-Filipchuk-Destexhe/blob/main/GuarinoFilipchukDestexhe.ipynb)  Jupyter notebook performs loading and selection of the MICrONS data, structural and dynamical analyses, and plots the results as in the paper panels.    
 
