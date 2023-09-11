@@ -134,7 +134,7 @@ minima = sorted(low_toBsaved)
 fig, ax = plt.subplots(figsize=(20,5))
 x = np.arange(0,len(smoothed_fr))
 for event in events:
-    ax.axvspan(event['start'], event['end'], alpha=0.1, color='green', zorder=1)
+    ax.axvspan(event['start'], event['end'], alpha=0.1, linewidth=0, facecolor='green', zorder=1)
 ax.plot(smoothed_fr,linewidth=0.5, color='k', zorder=2)
 ax.plot(event_threshold, linewidth=0.5, color='magenta', zorder=3)
 plt.plot(baseline_fr, linewidth=0.5, color='orange', zorder=3)
@@ -420,7 +420,20 @@ else:
     plt.close()
     fig.clear()
     fig.clf()
-
+    # Self-similarity index
+    fig = plt.figure()
+    plt.hist(reproducibility_list, bins='auto')
+    lims = plt.ylim()
+    plt.vlines([np.mean(reproducibility_list)], ymin=lims[0], ymax=lims[1], linestyles='dashed', colors='k')
+    plt.title("Self-Similarity Index: %.3f" % (np.mean(reproducibility_list)))
+    plt.xlabel('Auto-correlation')
+    plt.ylabel('Cluster occurrences')
+    fig.savefig(exp_path+'/results/Pattern_reproducibility_SelfSimilarityIndex.png', transparent=True)
+    fig.savefig(exp_path+'/results/Pattern_reproducibility_SelfSimilarityIndex.svg', transparent=True)
+    plt.close()
+    fig.clear()
+    fig.clf()
+    
     print("... finding cluster cores")
     clusters_cores = []
     clusters_cores_by_color = {ecolor:list() for ecolor in clustered_event_colors}
