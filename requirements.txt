@@ -51,3 +51,4 @@ cairocffi
 watermark
 more_itertools
 infomap
+statsmodels
