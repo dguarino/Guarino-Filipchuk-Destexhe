@@ -54,3 +54,4 @@ infomap
 statsmodels
 scikit-learn
 seaborn
+networks
