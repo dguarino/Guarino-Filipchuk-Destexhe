@@ -52,4 +52,4 @@ watermark
 more_itertools
 infomap
 statsmodels
-sklearn
+scikit-learn
