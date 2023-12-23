@@ -53,3 +53,4 @@ more_itertools
 infomap
 statsmodels
 scikit-learn
+seaborn
