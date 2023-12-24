@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8112490.svg)](https://doi.org/10.5281/zenodo.8112490)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dguarino/Guarino-Filipchuk-Destexhe/HEAD)
 
-# Manifold attractor dynamics have hierarchically modular structure in the mouse cortex
+# Convergent flows in modular networks generate reproducible firing patterns
 
 Analysis code to reproduce all figures of the forthcoming paper by Guarino, Filipchuk, Destexhe      
 
