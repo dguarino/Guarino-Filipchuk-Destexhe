@@ -13,3 +13,5 @@ wget -O MICrONS_data/calcium_trace.pkl "https://zenodo.org/record/5646567/files/
 # Downloading all required Neuropixels files for the analsys from the Janelia Figshare website
 
 wget -O stringer/7739750.zip "https://janelia.figshare.com/ndownloader/articles/7739750/versions/4"
+
+wget -O stringer/area_spiketrains.npy "https://www.dropbox.com/s/f1ro1rj1auhocmp/area_spiketrains.npy?dl=0"
