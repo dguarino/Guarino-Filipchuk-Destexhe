@@ -1,10 +1,15 @@
 #!/bin/bash
-# Downloading all required files for the analsys from The MICrONS project zenodo.org website
-
 set -ex
+
+# Downloading all required files for the analsys from The MICrONS project zenodo.org website
 
 wget -O MICrONS_data/pni_synapses_v185.csv "https://zenodo.org/record/3710459/files/pni_synapses_v185.csv?download=1"
 
 wget -O MICrONS_data/soma_subgraph_synapses_spines_v185.csv "https://zenodo.org/record/3710459/files/soma_subgraph_synapses_spines_v185.csv?download=1"
 
 wget -O MICrONS_data/calcium_trace.pkl "https://zenodo.org/record/5646567/files/calcium_trace.pkl?download=1"
+
+
+# Downloading all required Neuropixels files for the analsys from the Janelia Figshare website
+
+wget -O stringer/7739750.zip "https://janelia.figshare.com/ndownloader/articles/7739750/versions/4"
